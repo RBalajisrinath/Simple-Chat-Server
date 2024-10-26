@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Chat App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        .chat-container {
+            width: 400px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        #join-container, #chat-container {
+            padding: 20px;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .message {
+            margin-bottom: 10px;
+        }
+
+        .status {
+            color: #888;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div id="join-container">
+            <h2>Join Chat</h2>
+            <input type="text" id="username" placeholder="Enter your username">
+            <input type="text" id="room" placeholder="Enter room name">
+            <button onclick="joinChat()">Join</button>
+        </div>
+        <div id="chat-container" style="display: none;">
+            <h2 id="room-name"></h2>
+            <div id="chat-messages"></div>
+            <input type="text" id="message-input" placeholder="Type your message...">
+            <button onclick="sendMessage()">Send</button>
+            <button onclick="leaveChat()">Leave Chat</button>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let currentUser = '';
+        let currentRoom = '';
+
+        function joinChat() {
+            const username = document.getElementById('username').value;
+            const room = document.getElementById('room').value;
+            if (username && room) {
+                currentUser = username;
+                currentRoom = room;
+                socket.emit('join', {username: username, room: room});
+                document.getElementById('join-container').style.display = 'none';
+                document.getElementById('chat-container').style.display = 'block';
+                document.getElementById('room-name').innerText = `Room: ${room}`;
+            }
+        }
+
+        function sendMessage() {
+            const message = document.getElementById('message-input').value;
+            if (message) {
+                socket.emit('message', {username: currentUser, room: currentRoom, msg: message});
+                document.getElementById('message-input').value = '';
+            }
+        }
+
+        function leaveChat() {
+            socket.emit('leave', {username: currentUser, room: currentRoom});
+            document.getElementById('join-container').style.display = 'block';
+            document.getElementById('chat-container').style.display = 'none';
+            document.getElementById('chat-messages').innerHTML = '';
+            currentUser = '';
+            currentRoom = '';
+        }
+
+        socket.on('message', function(data) {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.innerText = `${data.username}: ${data.msg}`;
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+
+        socket.on('status', function(data) {
+            const chatMessages = document.getElementById('chat-messages');
+            const statusElement = document.createElement('div');
+            statusElement.classList.add('status');
+            statusElement.innerText = data.msg;
+            chatMessages.appendChild(statusElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+    </script>
+</body>
+</html>
