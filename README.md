@@ -48,6 +48,3 @@ You can customize the appearance of the chat interface by modifying the CSS in t
 - For production use, you should use a production-ready web server and ensure proper security measures are in place.
 - The current implementation uses in-memory storage for rooms and messages, which isn't suitable for large-scale applications.
 
-## License
-
-This project is open source and available under the MIT License.
